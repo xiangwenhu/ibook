@@ -1,0 +1,52 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <title>IBook 爱我所爱之书</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+
+<body>
+    <div id="app"></div>
+
+    <script src="js/azure-storage.common.min.js"></script>
+    <script src="js/azure-storage.file.js"></script>
+    <script src="bundle.js"></script>
+    <script>
+        var Stream = require('stream');
+        var util = require('util');
+        var Buffer = require('buffer').Buffer;     
+        function FileStream(file, opt) {
+            Stream.Readable.call(this, opt);
+
+            this.fileReader = new FileReader(file);
+            this.file = file;
+            this.size = file.size;
+            this.chunkSize = 1024 * 1024 * 1; // 100kb
+            this.offset = 0;
+            var _me = this;
+
+            this.fileReader.onloadend = function loaded(event) {
+                var data = event.target.result;
+                var buf = Buffer.from(data);
+                _me.push(buf);
+            }
+        }
+        util.inherits(FileStream, Stream.Readable);
+        FileStream.prototype._read = function () {
+            if (this.offset > this.size) {
+                this.push(null);
+            } else {
+                var end = this.offset + this.chunkSize;
+                var slice = this.file.slice(this.offset, end);
+                this.fileReader.readAsArrayBuffer(slice);
+                this.offset = end;
+            }
+        };
+    </script>
+    <audio src="一生所爱-舒淇.mp3" />
+</body>
+
+</html>
