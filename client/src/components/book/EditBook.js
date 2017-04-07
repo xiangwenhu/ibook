@@ -19,7 +19,7 @@ export default class EditBook extends React.Component {
         let { category: categories, book } = this.state,
             titleControl = this.state && this.state.type == 'add' ? <FormControl
                 type="text"
-                value={book.name || ''}
+                defaulValue={book.name || ''}
                 placeholder="请输入电子书名"
                 onChange={(ev) => {
                     let b = this.state.book

@@ -18,7 +18,7 @@ export default class EditCategory extends React.Component {
     render() {
         let titleControl = this.state && this.state.type == 'add' ? <FormControl
             type="text"
-            value={this.state.name}
+            defaulValue={this.state.name}
             placeholder="请输入分类标题"
             onChange={(ev) => this.setState({
                 name: ev.target.value
