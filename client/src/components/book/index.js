@@ -1,5 +1,5 @@
 import React from 'react'
-import { Grid, Row, Col, Button, ControlLabel } from 'react-bootstrap'
+import { Grid, Row, Col, Button, ControlLabel, Pagination } from 'react-bootstrap'
 import BookItem from './BookItem'
 import EditBook from './EditBook'
 import Dialog from '../public/Dialog'
@@ -13,16 +13,22 @@ import Seach from '../Search'
 export default class BookIndex extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {}
+        this.state = {
+            pagination: {
+                activePage: 1,
+            },
+            pageSize: 5,
+            pagedBooks: []
+        }
         this.onAddBook = this.onAddBook.bind(this)
         this.onDialogClose = this.onDialogClose.bind(this)
         this.onRead = this.onRead.bind(this)
+        this.onPage = this.onPage.bind(this)
     }
 
     render() {
-        let { book: books } = this.props,
-            arr = []
-        books.map((b, index) => {
+        let arr = []
+        this.state.pagedBooks.map((b, index) => {
             arr.push(
                 <BookItem item={b} key={index}
                     onUploaded={this.onUploaded.bind(this)} onRead={this.onRead}
@@ -31,16 +37,31 @@ export default class BookIndex extends React.Component {
         })
 
         return (
-            <div>
-                 <Seach search={this.props.bookActions.search.bind(this)} />
-                <p style={{ position: 'relative', height: '45px' }}>                   
-                    <Button bsStyle="primary" style={{ position: 'absolute', right: 0 }} onClick={this.onAddBook}>添加电子书</Button>
-                </p>
+            <div style={{position:'relative'}}>
+
+                <Seach search={this.props.bookActions.search.bind(this)} />
+
+                <Button bsStyle="primary" style={{ position: 'absolute', right: 0,top:0 }} onClick={this.onAddBook}>添加电子书</Button>
+
+                <Pagination   onSelect={this.onPage}  {...this.state.pagination} maxButtons={10} ellipsis={true} first={true} last={true} />
                 {arr}
+                <Pagination   onSelect={this.onPage}  {...this.state.pagination} maxButtons={10} ellipsis={true} first={true} last={true} />
                 <Dialog {...this.state.dialogOptions} />
                 <Confirm {...this.state.confirmOptions} />
+
             </div>
         )
+    }
+
+    componentWillReceiveProps(nextProps) {
+        let books = nextProps.book
+        this.setState({
+            pagedBooks: books.slice(0, this.state.pageSize),
+            pagination: {
+                activePage: 1,
+                items: Math.ceil( books.length/this.state.pageSize)
+            }
+        })
     }
 
     componentWillMount() {
@@ -119,6 +140,17 @@ export default class BookIndex extends React.Component {
     onConfirmDeleteBook(name) {
         this.props.bookActions.deleteItem(name)
         this.onDialogClose()
+    }
+
+    onPage(activePage) {
+        let books = this.props.book
+        this.setState({
+             pagination: {
+                activePage: activePage,
+                items: Math.ceil( books.length/this.state.pageSize)
+            },
+            pagedBooks:books.slice(this.state.pageSize * (activePage-1) , this.state.pageSize * activePage)
+        })
     }
 
 }

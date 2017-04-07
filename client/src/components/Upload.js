@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom'
 import { FormGroup, ControlLabel, FormControl, Button } from 'react-bootstrap'
 import { getBaseUrl } from '../utils/apiProxy'
 import storageConfig from '../config/storageConfig'
+import fileService from '../utils/fileService'
+
 
 
 export default class Upload extends React.Component {
@@ -14,62 +16,66 @@ export default class Upload extends React.Component {
             finishedOrError: false,
             startTime: null,
             speedSummary: null,
-            fileService: null,
+            fileService: fileService.getInstance(),
         }
         this.upload = this.upload.bind(this)
     }
 
     //上传文件
     upload() {
-        if (!this.state.fileService) {
-            let fileUri = `https://${storageConfig.StorageAccount}.file.core.windows.net`
-                , fileService = AzureStorage.createFileServiceWithSas(fileUri, storageConfig.SASToken)
-            this.setState({
-                fileService: fileService
-            }, () => {
-                let refFile = ReactDOM.findDOMNode(this.refFile)
-                if (!this.validateFile(refFile.files ? refFile.files[0] : null)) {
-                    return
+        if (this.state.fileService) {
+
+            let refFile = ReactDOM.findDOMNode(this.refFile)
+            if (!this.validateFile(refFile.files ? refFile.files[0] : null)) {
+                return
+            }
+            let file = refFile.files[0]
+            this.state.fileService.doesFileExist(storageConfig.FileShare, storageConfig.Directory, file.name, {}, (error, result, response) => {
+                if (error){
+                    alert(error)
+                }else{
+                    result && result.exists ?  this.props.onUploaded({ url: file.name }) : this.executeUpload(file)
                 }
-                this.setState({
-                    startTime: new Date(),
-                    uploading:true
-                })
-                let file = refFile.files[0]
-                var fileStream = new FileStream(file)
-
-                let speedSummary = this.state.fileService.createFileFromStream(storageConfig.FileShare, storageConfig.Directory, file.name, fileStream, file.size, {},  (error, result, response)=> {
-                    if (error) {
-                        alert(error)
-                    } else {
-                        this.props.onUploaded({url:file.name})
-                    }
-                    clearInterval(this.state.tickets)
-                })
-                this.setState({
-                    speedSummary: speedSummary
-                })
-                this.refreshProgress()
-
 
             })
-        }
 
+
+        }
+    }
+
+    executeUpload(file) {
+        this.setState({
+            startTime: new Date(),
+            uploading: true
+        })
+        var fileStream = new FileStream(file)
+
+        let speedSummary = this.state.fileService.createFileFromStream(storageConfig.FileShare, storageConfig.Directory, file.name, fileStream, file.size, {}, (error, result, response) => {
+            if (error) {
+                alert(error)
+            } else {
+                this.props.onUploaded({ url: file.name })
+            }
+            clearInterval(this.state.tickets)
+        })
+        this.setState({
+            speedSummary: speedSummary
+        })
+        this.refreshProgress()
     }
 
 
-
     refreshProgress() {
-       let tickets = setInterval(() => {
+        let tickets = setInterval(() => {
             if (!this.state.finishedOrError) {
                 var progress = this.state.speedSummary.getCompletePercent()
                 this.setState({
                     progress: progress
-                })            
+                })
             }
         }, 500)
         this.setState({
-            tickets:tickets
+            tickets: tickets
         })
     }
 
