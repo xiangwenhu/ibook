@@ -22,3 +22,6 @@ chrome 55以上
 <h2>安装和运行</h2>
 <p>1. npm install</p>
 <p>2. node server/app.js</p>
+
+<br/>
+<p>在线演示地址：https://babydairy2017.cloudapp.net:8082</p>
